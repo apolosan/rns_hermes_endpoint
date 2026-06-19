@@ -39,3 +39,8 @@ htmlcov/
 
 # Logs
 *.log
+
+# Build artifacts
+*.egg-info/
+.venv/
+
