@@ -8,11 +8,11 @@ dispatches them to Hermes, and sends replies back over the mesh.
 import logging
 import os
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
-import RNS
 import LXMF
+import RNS
 
 logger = logging.getLogger("hermes_reticulum.bridge")
 
@@ -52,13 +52,13 @@ class LXMFBridge:
         self.rns_config_path = str(rns_config_path) if rns_config_path else None
 
         # Will be set during start()
-        self.reticulum: Optional[RNS.Reticulum] = None
-        self.router: Optional[LXMF.LXMRouter] = None
-        self.identity: Optional[RNS.Identity] = None
-        self.destination: Optional[RNS.Destination] = None
+        self.reticulum: RNS.Reticulum | None = None
+        self.router: LXMF.LXMRouter | None = None
+        self.identity: RNS.Identity | None = None
+        self.destination: RNS.Destination | None = None
 
         # Message handler: called with (source_hash: str, content: str) -> str | None
-        self._message_handler: Optional[Callable[[str, str], Optional[str]]] = None
+        self._message_handler: Callable[[str, str], str | None] | None = None
         self._running = False
 
     @property
@@ -68,7 +68,7 @@ class LXMFBridge:
             return RNS.prettyhexrep(self.destination.hash)
         return None
 
-    def set_message_handler(self, handler: Callable[[str, str], Optional[str]]):
+    def set_message_handler(self, handler: Callable[[str, str], str | None]):
         """
         Register the handler called for each incoming message.
 
@@ -138,20 +138,22 @@ class LXMFBridge:
         """
         try:
             # Extract message content
-            content = message.content_as_string() if hasattr(message, "content_as_string") else str(message.content)
+            if hasattr(message, "content_as_string"):
+                content = message.content_as_string()
+            else:
+                content = str(message.content)
+
             source_hash = RNS.prettyhexrep(message.source_hash)
-            source_hash_raw = message.source_hash.hex() if isinstance(message.source_hash, bytes) else message.source_hash.hex()
+            src_bytes = message.source_hash
+            source_hash_raw = src_bytes.hex() if isinstance(src_bytes, bytes) else src_bytes.hex()
 
             # Log reception
-            signature_status = "valid" if message.signature_validated else "invalid/unknown"
+            sig = "valid" if message.signature_validated else "invalid/unknown"
             transport = "link" if message.requested_delivery else "opportunistic"
 
             logger.info(
                 "Received LXMF from %s [%s, sig=%s]: %.100s",
-                source_hash,
-                transport,
-                signature_status,
-                content,
+                source_hash, transport, sig, content,
             )
 
             # Invoke the message handler
@@ -160,7 +162,9 @@ class LXMFBridge:
                 if reply:
                     self.send_reply(source_hash_raw, reply)
             else:
-                logger.warning("No message handler registered — dropping message from %s", source_hash)
+                logger.warning(
+                    "No message handler — dropping from %s", source_hash
+                )
 
         except Exception as e:
             logger.error("Error processing LXMF message: %s", e, exc_info=True)
@@ -212,7 +216,10 @@ class LXMFBridge:
             )
             self.router.handle_outbound(lxm)
 
-            logger.info("Reply dispatched to %s (%d bytes)", recipient_hex[:16], len(text.encode("utf-8")))
+            logger.info(
+                "Reply dispatched to %s (%d bytes)",
+                recipient_hex[:16], len(text.encode("utf-8")),
+            )
             return True
 
         except Exception as e:

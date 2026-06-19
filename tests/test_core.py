@@ -2,10 +2,7 @@
 Basic tests for Hermes for Reticulum.
 """
 
-import os
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 
 class TestACL:
@@ -67,6 +64,7 @@ class TestHermesClient:
 
     def test_chat_handles_timeout(self, monkeypatch):
         import subprocess as sp
+
         from hermes_reticulum.core.hermes_client import HermesClient
 
         def mock_run(cmd, **kwargs):

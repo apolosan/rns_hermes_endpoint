@@ -8,10 +8,6 @@ the agent can process them like any other messaging platform.
 import asyncio
 import logging
 import os
-import sys
-import time
-from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger("hermes_reticulum.adapter")
 
@@ -19,8 +15,8 @@ logger = logging.getLogger("hermes_reticulum.adapter")
 def check_reticulum_requirements() -> bool:
     """Check if RNS and LXMF Python packages are available."""
     try:
-        import RNS  # noqa: F401
         import LXMF  # noqa: F401
+        import RNS  # noqa: F401
         return True
     except ImportError:
         return False
@@ -49,7 +45,11 @@ class ReticulumPlatformAdapter:
         self.config = config
         extra = getattr(config, "extra", {}) or {}
 
-        self.display_name = extra.get("display_name", os.getenv("RETICULUM_DISPLAY_NAME", "Hermes for Reticulum"))
+        default_name = "Hermes for Reticulum"
+        self.display_name = extra.get(
+            "display_name",
+            os.getenv("RETICULUM_DISPLAY_NAME", default_name),
+        )
         self.storage_path = extra.get("storage_path", os.getenv("RETICULUM_STORAGE", None))
         self.stamp_cost = int(extra.get("stamp_cost", os.getenv("RETICULUM_STAMP_COST", "8")))
         self.hermes_bin = extra.get("hermes_bin", os.getenv("HERMES_BIN", "hermes"))
@@ -60,7 +60,7 @@ class ReticulumPlatformAdapter:
         self._hermes_client = None
         self._acl = None
         self._handle_message = None  # gateway callback
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._loop: asyncio.AbstractEventLoop | None = None
         self._connected = False
 
     def connect(self) -> bool:
@@ -69,9 +69,9 @@ class ReticulumPlatformAdapter:
         Called by the gateway during startup.
         """
         try:
+            from hermes_reticulum.core.acl import AccessControl
             from hermes_reticulum.core.bridge import LXMFBridge
             from hermes_reticulum.core.hermes_client import HermesClient
-            from hermes_reticulum.core.acl import AccessControl
 
             self._acl = AccessControl()
             self._hermes_client = HermesClient(

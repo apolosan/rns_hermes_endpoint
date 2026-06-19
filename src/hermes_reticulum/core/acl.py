@@ -9,7 +9,6 @@ Supports:
 
 import logging
 import os
-from typing import Optional
 
 logger = logging.getLogger("hermes_reticulum.acl")
 
@@ -99,4 +98,8 @@ class AccessControl:
         return "allowlist" if self.allowed_users else "closed"
 
     def __repr__(self) -> str:
-        return f"AccessControl(mode={self.mode}, allowed={len(self.allowed_users)}, blocked={len(self.blocked_users)})"
+        return (
+            f"AccessControl(mode={self.mode}, "
+            f"allowed={len(self.allowed_users)}, "
+            f"blocked={len(self.blocked_users)})"
+        )

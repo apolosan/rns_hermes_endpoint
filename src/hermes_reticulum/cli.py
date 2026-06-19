@@ -15,9 +15,9 @@ import os
 import sys
 
 from hermes_reticulum import __version__
+from hermes_reticulum.core.acl import AccessControl
 from hermes_reticulum.core.bridge import LXMFBridge
 from hermes_reticulum.core.hermes_client import HermesClient
-from hermes_reticulum.core.acl import AccessControl
 
 
 def setup_logging(verbose: bool = False):

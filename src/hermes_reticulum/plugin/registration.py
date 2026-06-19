@@ -8,7 +8,6 @@ the Reticulum adapter automatically.
 
 import logging
 import os
-from typing import Optional
 
 logger = logging.getLogger("hermes_reticulum.registration")
 
@@ -20,7 +19,10 @@ def register(ctx):
     Args:
         ctx: PluginContext with register_platform() method.
     """
-    from hermes_reticulum.plugin.adapter import check_reticulum_requirements, ReticulumPlatformAdapter
+    from hermes_reticulum.plugin.adapter import (
+        ReticulumPlatformAdapter,
+        check_reticulum_requirements,
+    )
 
     def validate_config(config) -> bool:
         """Validate that the platform config is usable."""
@@ -31,7 +33,7 @@ def register(ctx):
         # This is called by the gateway status system
         return os.getenv("RETICULUM_CONNECTED", "false").lower() == "true"
 
-    def env_enablement() -> Optional[dict]:
+    def env_enablement() -> dict | None:
         """Seed PlatformConfig.extra from environment variables."""
         extra = {}
         display_name = os.getenv("RETICULUM_DISPLAY_NAME")

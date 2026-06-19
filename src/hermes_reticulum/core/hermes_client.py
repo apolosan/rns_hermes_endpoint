@@ -9,7 +9,6 @@ Supports two modes:
 import logging
 import os
 import subprocess
-from typing import Optional
 
 logger = logging.getLogger("hermes_reticulum.hermes")
 
@@ -40,7 +39,7 @@ class HermesClient:
         self.source_tag = source_tag
         self.extra_args = extra_args or []
 
-    def chat(self, message: str) -> Optional[str]:
+    def chat(self, message: str) -> str | None:
         """
         Send a message to Hermes and return the text reply.
 
@@ -89,7 +88,10 @@ class HermesClient:
 
         except subprocess.TimeoutExpired:
             logger.error("Hermes timed out after %ds", self.timeout)
-            return f"⏱️ Processamento excedeu o limite de {self.timeout}s. Tente uma pergunta mais curta."
+            return (
+                f"⏱️ Processamento excedeu o limite de {self.timeout}s. "
+                "Tente uma pergunta mais curta."
+            )
 
         except FileNotFoundError:
             logger.error("Hermes binary not found at: %s", self.hermes_bin)
@@ -107,4 +109,6 @@ class HermesClient:
             return "⏱️ Processamento cancelado por timeout."
         else:
             brief = (stderr or "").split("\n")[-1][:200]
-            return f"❌ Erro (código {returncode}): {brief}" if brief else f"❌ Erro (código {returncode})"
+            if brief:
+                return f"❌ Erro (código {returncode}): {brief}"
+            return f"❌ Erro (código {returncode})"
