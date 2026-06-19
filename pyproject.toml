@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "hermes-reticulum"
+version = "0.1.0"
+description = "Reticulum/LXMF bridge for Hermes Agent — chat with your AI agent off-grid via Sideband"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Einar Cesar", email = "einar@ufcat.edu.br"},
+]
+keywords = ["reticulum", "lxmf", "hermes", "ai-agent", "off-grid", "lora", "sideband", "mesh"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "reticulum>=1.3.0",
+    "lxmf>=0.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+hermes-reticulum = "hermes_reticulum.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/einarsantos/rns_hermes_endpoint"
+Repository = "https://github.com/einarsantos/rns_hermes_endpoint"
+Issues = "https://github.com/einarsantos/rns_hermes_endpoint/issues"
+
+[tool.setuptools.packages.find]
+include = ["hermes_reticulum*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

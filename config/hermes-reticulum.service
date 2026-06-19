@@ -1,0 +1,33 @@
+[Unit]
+Description=Hermes for Reticulum — AI agent bridge on the mesh network
+Documentation=https://github.com/einarsantos/rns_hermes_endpoint
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=data
+Group=data
+WorkingDirectory=/opt/data/rns_hermes_endpoint
+Environment=HOME=/opt/data
+EnvironmentFile=/opt/data/rns_hermes_endpoint/.env
+ExecStart=/opt/data/rns_hermes_endpoint/venv/bin/hermes-reticulum run
+Restart=on-failure
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/data/.lxmf /opt/data/.reticulum /opt/data/.hermes
+PrivateTmp=yes
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes-reticulum
+
+[Install]
+WantedBy=multi-user.target
