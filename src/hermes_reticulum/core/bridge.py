@@ -249,7 +249,13 @@ class LXMFBridge:
             return False
 
         # Use provided identity or try to recall
+        # source_identity may be an RNS.Destination (from message.source)
+        # or an RNS.Identity — extract the Identity in either case
         recipient_identity = source_identity
+        if recipient_identity is not None:
+            # If it's a Destination, extract the underlying Identity
+            if hasattr(recipient_identity, "identity"):
+                recipient_identity = recipient_identity.identity
         if recipient_identity is None:
             try:
                 recipient_hash = bytes.fromhex(recipient_hex)
