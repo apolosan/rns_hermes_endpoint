@@ -199,8 +199,10 @@ class LXMFBridge:
 
             # Dispatch to thread pool (non-blocking)
             if self._message_handler and self._pool:
+                # Pass source identity for reply routing
+                source_identity = getattr(message, "source", None)
                 self._pool.submit(
-                    self._process_and_reply, source_hash_raw, content, profile,
+                    self._process_and_reply, source_hash_raw, content, profile, source_identity,
                 )
             else:
                 logger.warning("No handler or pool — dropping from %s", source_hash)
@@ -209,7 +211,7 @@ class LXMFBridge:
             logger.error("Error in LXMF callback: %s", e, exc_info=True)
 
     def _process_and_reply(
-        self, source_hash: str, content: str, profile=None,
+        self, source_hash: str, content: str, profile=None, source_identity=None,
     ):
         """
         Process a message and send the reply. Runs in a thread pool worker.
@@ -222,20 +224,22 @@ class LXMFBridge:
                 for i, part in enumerate(parts):
                     if i > 0 and profile:
                         time.sleep(profile.send_delay_ms / 1000)
-                    self.send_reply(source_hash, part)
+                    self.send_reply(source_hash, part, source_identity)
         except Exception as e:
             logger.error(
                 "Error processing message from %s: %s",
                 source_hash[:16], e, exc_info=True,
             )
 
-    def send_reply(self, recipient_hex: str, text: str) -> bool:
+    def send_reply(self, recipient_hex: str, text: str, source_identity=None) -> bool:
         """
         Send an LXMF text message to a recipient.
 
         Args:
             recipient_hex: Hex string of the recipient's LXMF hash.
             text: Message content (plain text).
+            source_identity: The sender's RNS.Identity (from the incoming message).
+                If provided, used directly instead of recalling from store.
 
         Returns:
             True if the message was dispatched, False on error.
@@ -244,14 +248,16 @@ class LXMFBridge:
             logger.error("Bridge not started — cannot send reply")
             return False
 
-        try:
-            recipient_hash = bytes.fromhex(recipient_hex)
-        except ValueError:
-            logger.error("Invalid recipient hash: %s", recipient_hex)
-            return False
+        # Use provided identity or try to recall
+        recipient_identity = source_identity
+        if recipient_identity is None:
+            try:
+                recipient_hash = bytes.fromhex(recipient_hex)
+            except ValueError:
+                logger.error("Invalid recipient hash: %s", recipient_hex)
+                return False
+            recipient_identity = RNS.Identity.recall(recipient_hash)
 
-        # Recall recipient identity
-        recipient_identity = RNS.Identity.recall(recipient_hash)
         if recipient_identity is None:
             logger.error(
                 "Unknown recipient identity for %s — cannot send",
