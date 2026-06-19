@@ -1,0 +1,23 @@
+[Unit]
+Description=Hermes for Reticulum — AI agent on the mesh network
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/data/rns_hermes_endpoint
+Environment=HOME=/opt/data/home
+EnvironmentFile=/opt/data/rns_hermes_endpoint/.env
+ExecStart=/opt/data/rns_hermes_endpoint/venv/bin/hermes-reticulum run
+Restart=on-failure
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes-reticulum
+
+[Install]
+WantedBy=default.target

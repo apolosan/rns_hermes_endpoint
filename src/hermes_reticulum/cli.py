@@ -83,7 +83,7 @@ def cmd_address(args):
         sys.exit(1)
 
     RNS.Reticulum()  # init
-    identity = RNS.Identity(identity_path)
+    identity = RNS.Identity.from_file(identity_path)
     print(f"LXMF Address: {RNS.prettyhexrep(identity.hash)}")
 
 
@@ -105,7 +105,7 @@ def cmd_status(args):
     if os.path.exists(identity_path):
         import RNS
         RNS.Reticulum()
-        identity = RNS.Identity(identity_path)
+        identity = RNS.Identity.from_file(identity_path)
         print(f"  Address:   {RNS.prettyhexrep(identity.hash)}")
 
         # Show RNS interfaces

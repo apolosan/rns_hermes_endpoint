@@ -112,11 +112,16 @@ class LXMFBridge:
         # Load or create identity
         identity_path = self.storage_path / "hermes_identity"
         if identity_path.exists():
-            self.identity = RNS.Identity(str(identity_path))
-            logger.info("Loaded existing identity from %s", identity_path)
+            self.identity = RNS.Identity.from_file(str(identity_path))
+            if self.identity is None:
+                logger.warning("Corrupt identity at %s, creating new one", identity_path)
+                self.identity = RNS.Identity()
+                self.identity.to_file(str(identity_path))
+            else:
+                logger.info("Loaded existing identity from %s", identity_path)
         else:
             self.identity = RNS.Identity()
-            self.identity.save(str(identity_path))
+            self.identity.to_file(str(identity_path))
             logger.info("Created new identity at %s", identity_path)
 
         # Register delivery identity and destination
