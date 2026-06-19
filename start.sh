@@ -1,12 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Hermes for Reticulum — background runner
-# Usage: ./start.sh [stop|status]
+# Usage: ./start.sh [stop|status|restart]
 
-PROJECT_DIR="/opt/data/rns_hermes_endpoint"
-VENV="$PROJECT_DIR/venv"
-PIDFILE="/opt/data/.lxmf/reticulum.pid"
-LOGFILE="/opt/data/.lxmf/reticulum.log"
-ENVFILE="$PROJECT_DIR/.env"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${PROJECT_DIR:-$SCRIPT_DIR}"
+VENV="${VENV:-$PROJECT_DIR/venv}"
+PIDFILE="${PIDFILE:-$PROJECT_DIR/.lxmf/reticulum.pid}"
+LOGFILE="${LOGFILE:-$PROJECT_DIR/.lxmf/reticulum.log}"
+ENVFILE="${ENVFILE:-$PROJECT_DIR/.env}"
 
 start() {
     if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
@@ -14,14 +15,19 @@ start() {
         return 0
     fi
 
+    if [ ! -f "$ENVFILE" ]; then
+        echo "Missing $ENVFILE — copy config/env.example to .env first"
+        exit 1
+    fi
+
+    mkdir -p "$(dirname "$PIDFILE")" "$(dirname "$LOGFILE")"
+
     echo "Starting Hermes for Reticulum..."
     cd "$PROJECT_DIR"
 
-    # Source env and ensure HOME is correct for Reticulum config lookup
     set -a
+    # shellcheck source=/dev/null
     . "$ENVFILE"
-    HOME=/opt/data
-    export HOME
     set +a
 
     nohup "$VENV/bin/hermes-reticulum" run \

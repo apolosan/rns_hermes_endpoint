@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
-    {name = "Einar Cesar", email = "einar@ufcat.edu.br"},
+    {name = "apolosan"},
 ]
 keywords = ["reticulum", "lxmf", "hermes", "ai-agent", "off-grid", "lora", "sideband", "mesh"]
 classifiers = [
@@ -41,9 +41,9 @@ dev = [
 hermes-reticulum = "hermes_reticulum.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/einarsantos/rns_hermes_endpoint"
-Repository = "https://github.com/einarsantos/rns_hermes_endpoint"
-Issues = "https://github.com/einarsantos/rns_hermes_endpoint/issues"
+Homepage = "https://github.com/apolosan/rns_hermes_endpoint"
+Repository = "https://github.com/apolosan/rns_hermes_endpoint"
+Issues = "https://github.com/apolosan/rns_hermes_endpoint/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

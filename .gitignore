@@ -40,6 +40,9 @@ htmlcov/
 # Logs
 *.log
 
+# Project documentation (local notes, not versioned)
+docs/
+
 # Build artifacts
 *.egg-info/
 .venv/
