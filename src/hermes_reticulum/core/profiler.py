@@ -95,7 +95,7 @@ class ChannelMetrics:
             hops=hops,
             source_hash=source_hash,
             transport_encrypted=getattr(message, "transport_encrypted", False),
-            is_link=getattr(message, "requested_delivery", False),
+            is_link=(getattr(message, "method", None) == LXMF.LXMessage.DIRECT),
         )
 
 

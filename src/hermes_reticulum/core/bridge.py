@@ -182,11 +182,15 @@ class LXMFBridge:
 
             # Log reception
             sig = "valid" if message.signature_validated else "invalid/unknown"
-            transport = "link" if message.requested_delivery else "opportunistic"
+            method_name = {
+                LXMF.LXMessage.OPPORTUNISTIC: "opportunistic",
+                LXMF.LXMessage.DIRECT: "link",
+                LXMF.LXMessage.PROPAGATED: "propagated",
+            }.get(getattr(message, "method", None), "unknown")
 
             logger.info(
                 "Received LXMF from %s [%s, sig=%s]: %.100s",
-                source_hash, transport, sig, content,
+                source_hash, method_name, sig, content,
             )
 
             # Extract channel metrics and classify
