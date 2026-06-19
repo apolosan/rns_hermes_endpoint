@@ -8,9 +8,37 @@ Supports two modes:
 
 import logging
 import os
+import shutil
 import subprocess
 
 logger = logging.getLogger("hermes_reticulum.hermes")
+
+# Common locations for the hermes binary
+_HERMES_CANDIDATES = [
+    "hermes",  # in PATH
+    "/opt/hermes/.venv/bin/hermes",
+    "/opt/hermes/bin/hermes",
+    os.path.expanduser("~/.hermes/bin/hermes"),
+    os.path.expanduser("~/.local/bin/hermes"),
+]
+
+
+def find_hermes_bin() -> str | None:
+    """
+    Auto-detect the hermes binary path.
+    Checks PATH first, then known installation locations.
+    """
+    # Check PATH first
+    found = shutil.which("hermes")
+    if found:
+        return found
+
+    # Check known locations
+    for candidate in _HERMES_CANDIDATES:
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+
+    return None
 
 
 class HermesClient:
@@ -22,22 +50,31 @@ class HermesClient:
 
     def __init__(
         self,
-        hermes_bin: str = "hermes",
+        hermes_bin: str | None = None,
         timeout: int = 300,
         source_tag: str = "reticulum",
         extra_args: list[str] | None = None,
     ):
         """
         Args:
-            hermes_bin: Path to the hermes CLI binary.
+            hermes_bin: Path to the hermes CLI binary. Auto-detected if None.
             timeout: Max seconds to wait for a reply.
             source_tag: Source tag passed to --source for session tracking.
             extra_args: Additional args to pass to hermes chat.
         """
+        if hermes_bin is None:
+            hermes_bin = find_hermes_bin()
+        if hermes_bin is None:
+            raise RuntimeError(
+                "Hermes binary not found. Install Hermes or set HERMES_BIN env var."
+            )
+
         self.hermes_bin = hermes_bin
         self.timeout = timeout
         self.source_tag = source_tag
         self.extra_args = extra_args or []
+
+        logger.info("Hermes binary: %s", self.hermes_bin)
 
     def chat(self, message: str) -> str | None:
         """

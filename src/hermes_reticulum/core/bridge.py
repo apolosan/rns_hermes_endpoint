@@ -3,18 +3,27 @@ LXMF Message Bridge — the core engine that connects Reticulum/LXMF to Hermes A
 
 Manages the LXM Router, receives messages from Sideband users,
 dispatches them to Hermes, and sends replies back over the mesh.
+
+Thread safety: The LXMF delivery callback runs inside the RNS event loop
+thread. To avoid blocking the mesh stack, we dispatch message handling to
+a separate thread pool so that long-running operations (like calling the
+Hermes CLI) don't stall incoming message processing.
 """
 
 import logging
 import os
+import signal
 import time
-from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import LXMF
 import RNS
 
 logger = logging.getLogger("hermes_reticulum.bridge")
+
+# Max concurrent message handlers — prevents hermes subprocess flood
+_MAX_HANDLERS = 4
 
 
 class LXMFBridge:
@@ -58,8 +67,11 @@ class LXMFBridge:
         self.destination: RNS.Destination | None = None
 
         # Message handler: called with (source_hash: str, content: str) -> str | None
-        self._message_handler: Callable[[str, str], str | None] | None = None
+        self._message_handler = None
         self._running = False
+
+        # Thread pool for non-blocking message processing
+        self._pool: ThreadPoolExecutor | None = None
 
     @property
     def address(self) -> str | None:
@@ -68,7 +80,7 @@ class LXMFBridge:
             return RNS.prettyhexrep(self.destination.hash)
         return None
 
-    def set_message_handler(self, handler: Callable[[str, str], str | None]):
+    def set_message_handler(self, handler):
         """
         Register the handler called for each incoming message.
 
@@ -117,6 +129,12 @@ class LXMFBridge:
         # Register the inbound message callback
         self.router.register_delivery_callback(self._on_lxmf_message)
 
+        # Create thread pool for message processing
+        self._pool = ThreadPoolExecutor(
+            max_workers=_MAX_HANDLERS,
+            thread_name_prefix="lxmf-handler",
+        )
+
         self._running = True
 
         logger.info(
@@ -134,10 +152,12 @@ class LXMFBridge:
     def _on_lxmf_message(self, message):
         """
         Internal callback for incoming LXMF messages.
-        Parses the message, invokes the handler, and sends the reply.
+
+        This runs inside the RNS event loop thread. To avoid blocking
+        the mesh stack, we dispatch the actual processing to a thread pool.
         """
         try:
-            # Extract message content
+            # Extract message content (fast, safe to do here)
             if hasattr(message, "content_as_string"):
                 content = message.content_as_string()
             else:
@@ -156,18 +176,28 @@ class LXMFBridge:
                 source_hash, transport, sig, content,
             )
 
-            # Invoke the message handler
-            if self._message_handler:
-                reply = self._message_handler(source_hash, content)
-                if reply:
-                    self.send_reply(source_hash_raw, reply)
+            # Dispatch to thread pool (non-blocking)
+            if self._message_handler and self._pool:
+                self._pool.submit(self._process_and_reply, source_hash_raw, content)
             else:
-                logger.warning(
-                    "No message handler — dropping from %s", source_hash
-                )
+                logger.warning("No handler or pool — dropping from %s", source_hash)
 
         except Exception as e:
-            logger.error("Error processing LXMF message: %s", e, exc_info=True)
+            logger.error("Error in LXMF callback: %s", e, exc_info=True)
+
+    def _process_and_reply(self, source_hash: str, content: str):
+        """
+        Process a message and send the reply. Runs in a thread pool worker.
+        """
+        try:
+            reply = self._message_handler(source_hash, content)
+            if reply:
+                self.send_reply(source_hash, reply)
+        except Exception as e:
+            logger.error(
+                "Error processing message from %s: %s",
+                source_hash[:16], e, exc_info=True,
+            )
 
     def send_reply(self, recipient_hex: str, text: str) -> bool:
         """
@@ -193,7 +223,10 @@ class LXMFBridge:
         # Recall recipient identity
         recipient_identity = RNS.Identity.recall(recipient_hash)
         if recipient_identity is None:
-            logger.error("Unknown recipient identity for %s — cannot send", recipient_hex)
+            logger.error(
+                "Unknown recipient identity for %s — cannot send",
+                recipient_hex,
+            )
             return False
 
         try:
@@ -223,13 +256,20 @@ class LXMFBridge:
             return True
 
         except Exception as e:
-            logger.error("Failed to send reply to %s: %s", recipient_hex[:16], e, exc_info=True)
+            logger.error(
+                "Failed to send reply to %s: %s",
+                recipient_hex[:16], e, exc_info=True,
+            )
             return False
 
     def stop(self):
         """Gracefully shut down the bridge."""
         logger.info("Shutting down Hermes for Reticulum bridge...")
         self._running = False
+
+        if self._pool:
+            self._pool.shutdown(wait=False)
+
         # Reticulum handles cleanup internally
 
     def run_forever(self):
@@ -240,7 +280,16 @@ class LXMFBridge:
         self.start()
         self.announce()
 
+        # Set up signal handlers for graceful shutdown
+        def _handle_signal(signum, frame):
+            logger.info("Signal %s received, shutting down...", signum)
+            self._running = False
+
+        signal.signal(signal.SIGTERM, _handle_signal)
+        signal.signal(signal.SIGINT, _handle_signal)
+
         logger.info("Bridge running. Press Ctrl+C to stop.")
+
         try:
             while self._running:
                 time.sleep(1)
