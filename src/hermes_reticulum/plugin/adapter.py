@@ -115,7 +115,7 @@ class ReticulumPlatformAdapter:
         """
         # ACL check
         if self._acl and not self._acl.is_allowed(source_hash):
-            return "Acesso nao autorizado."
+            return "Access not authorized."
 
         # Call Hermes
         if self._hermes_client:

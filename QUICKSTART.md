@@ -1,19 +1,19 @@
 # QUICKSTART — Hermes for Reticulum
 
-Guia mínimo para colocar o bridge no ar em **menos de 10 minutos**.
+Minimal guide to get the bridge running in **under 10 minutes**.
 
-## Pré-requisitos
+## Prerequisites
 
-- Linux (ou macOS) com Python **3.11+**
-- [Hermes Agent](https://github.com/NousResearch/hermes-agent) instalado e testado:
+- Linux (or macOS) with Python **3.11+**
+- [Hermes Agent](https://github.com/NousResearch/hermes-agent) installed and tested:
 
 ```bash
-hermes chat -q "responda apenas OK"
+hermes chat -q "reply with OK only"
 ```
 
-- (Opcional) VPS com porta **37428/TCP** liberada no firewall, se o nó for acessível pela internet
+- (Optional) VPS with port **37428/TCP** open in the firewall, if the node is reachable from the internet
 
-## 1. Clonar e instalar
+## 1. Clone and install
 
 ```bash
 git clone https://github.com/apolosan/rns_hermes_endpoint.git
@@ -22,30 +22,30 @@ bash install.sh
 source venv/bin/activate
 ```
 
-O `install.sh` cria o `venv`, instala o pacote, prepara `~/.lxmf/storage` e copia `config/reticulum.conf` para `~/.reticulum/config` quando ainda não existir.
+`install.sh` creates the `venv`, installs the package, prepares `~/.lxmf/storage`, and copies `config/reticulum.conf` to `~/.reticulum/config` when it does not exist yet.
 
-## 2. Configurar ambiente
+## 2. Configure environment
 
 ```bash
 cp config/env.example .env
 ```
 
-Edite `.env` — no mínimo:
+Edit `.env` — at minimum:
 
 ```bash
-# Caminho do hermes, se não estiver no PATH
-HERMES_BIN=/caminho/para/hermes
+# Path to hermes, if not on PATH
+HERMES_BIN=/path/to/hermes
 
-# Seu hash LXMF do Sideband (Sideband → Settings → Identity)
+# Your Sideband LXMF hash (Sideband → Settings → Identity)
 HERMES_RETICUM_ALLOW_ALL=false
-HERMES_RETICUM_ALLOWED_USERS=SEU_HASH_LXMF_AQUI
+HERMES_RETICUM_ALLOWED_USERS=YOUR_LXMF_HASH_HERE
 ```
 
-## 3. Ajustar Reticulum (se necessário)
+## 3. Adjust Reticulum (if needed)
 
-Arquivo: `~/.reticulum/config` (ou `config/reticulum.conf` no repositório como referência).
+File: `~/.reticulum/config` (or `config/reticulum.conf` in the repo as reference).
 
-**Servidor TCP** — escuta conexões na sua máquina:
+**TCP Server** — listens for connections on your machine:
 
 ```ini
 [[TCP Server Interface]]
@@ -55,7 +55,7 @@ Arquivo: `~/.reticulum/config` (ou `config/reticulum.conf` no repositório como 
   listen_port = 37428
 ```
 
-**Cliente TCP** — conecta a um peer existente na mesh (opcional):
+**TCP Client** — connects to an existing mesh peer (optional):
 
 ```ini
 [[TCP Client]]
@@ -65,21 +65,21 @@ Arquivo: `~/.reticulum/config` (ou `config/reticulum.conf` no repositório como 
   target_port = YOUR_MESH_PEER_PORT
 ```
 
-Firewall (exemplo):
+Firewall (example):
 
 ```bash
 sudo ufw allow 37428/tcp
 ```
 
-## 4. Iniciar o bridge
+## 4. Start the bridge
 
 ```bash
 hermes-reticulum run
 ```
 
-Na saída, anote o **endereço LXMF** (hash de 32 caracteres hex).
+On startup, note the **LXMF address** (32-character hex hash).
 
-Alternativa em background:
+Background alternative:
 
 ```bash
 ./start.sh start
@@ -87,32 +87,32 @@ Alternativa em background:
 ./start.sh stop
 ```
 
-## 5. Conectar no Sideband
+## 5. Connect from Sideband
 
-1. Instale o [Sideband](https://github.com/markqvist/Sideband/releases/latest) no Android
-2. Configure interface de rede (TCP para o IP:37428 do servidor, ou LoRa)
-3. Adicione o endereço LXMF do bridge como **contato**
-4. Envie uma mensagem de teste
+1. Install [Sideband](https://github.com/markqvist/Sideband/releases/latest) on Android
+2. Configure a network interface (TCP to server IP:37428, or LoRa)
+3. Add the bridge LXMF address as a **contact**
+4. Send a test message
 
-## Verificação rápida
+## Quick verification
 
 ```bash
-hermes-reticulum address    # endereço LXMF
-hermes-reticulum status     # estado do bridge
-hermes-reticulum run -v     # log detalhado para depuração
+hermes-reticulum address    # LXMF address
+hermes-reticulum status     # bridge state
+hermes-reticulum run -v     # verbose log for debugging
 ```
 
-## Problemas comuns
+## Common issues
 
-| Sintoma | Solução |
-|---------|---------|
-| `hermes: command not found` | Defina `HERMES_BIN` no `.env` |
-| Mensagem ignorada | Confirme seu hash em `HERMES_RETICUM_ALLOWED_USERS` |
-| Sideband não conecta | Verifique IP, porta 37428 e firewall |
-| Erro de identidade LXMF | Apague `~/.lxmf/storage` **somente** se puder regenerar contatos |
+| Symptom | Fix |
+|---------|-----|
+| `hermes: command not found` | Set `HERMES_BIN` in `.env` |
+| Message ignored | Confirm your hash in `HERMES_RETICUM_ALLOWED_USERS` |
+| Sideband won't connect | Check IP, port 37428, and firewall |
+| LXMF identity error | Delete `~/.lxmf/storage` **only** if you can regenerate contacts |
 
-## Próximos passos
+## Next steps
 
-- Detalhes completos: [README.md](README.md)
-- Serviço persistente: arquivos em `config/hermes-reticulum*.service`
-- Desenvolvimento e testes: `pip install -e ".[dev]" && pytest tests/ -v`
+- Full details: [README.md](README.md)
+- Persistent service: files in `config/hermes-reticulum*.service`
+- Development and tests: `pip install -e ".[dev]" && pytest tests/ -v`

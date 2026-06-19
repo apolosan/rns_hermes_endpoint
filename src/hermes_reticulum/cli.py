@@ -69,11 +69,11 @@ def cmd_run(args):
     def handle_message(source_hash: str, content: str, profile=None) -> str | None:
         if not acl.is_allowed(source_hash):
             logger.info("Message from %s rejected by ACL", source_hash[:16])
-            return "⛔ Acesso nao autorizado."
+            return "⛔ Access not authorized."
 
         # Build prompt with adaptive instruction from profile
         if profile and profile.instruction:
-            prompt = f"{profile.instruction}\n\nUsuario: {content}"
+            prompt = f"{profile.instruction}\n\nUser: {content}"
         else:
             prompt = content
 

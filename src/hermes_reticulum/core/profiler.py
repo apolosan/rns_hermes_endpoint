@@ -137,9 +137,9 @@ PROFILES = {
         split_long=True,
         send_delay_ms=2000,
         instruction=(
-            "Responda em no maximo 3 frases curtas e diretas. "
-            "Sem formatacao, sem exemplos, sem explicacoes longas. "
-            "Maximo 200 caracteres. Vá direto ao ponto."
+            "Reply in at most 3 short, direct sentences. "
+            "No formatting, no examples, no long explanations. "
+            "Maximum 200 characters. Get straight to the point."
         ),
     ),
 
@@ -153,9 +153,9 @@ PROFILES = {
         split_long=True,
         send_delay_ms=1500,
         instruction=(
-            "Responda de forma concisa em ate 5 frases. "
-            "Sem formatacao markdown. Seja direto. "
-            "Maximo 500 caracteres."
+            "Reply concisely in up to 5 sentences. "
+            "No markdown formatting. Be direct. "
+            "Maximum 500 characters."
         ),
     ),
 
@@ -169,9 +169,9 @@ PROFILES = {
         split_long=True,
         send_delay_ms=500,
         instruction=(
-            "Responda de forma clara e completa. "
-            "Use texto simples sem markdown. "
-            "Maximo 4000 caracteres."
+            "Reply clearly and completely. "
+            "Use plain text without markdown. "
+            "Maximum 4000 characters."
         ),
     ),
 
@@ -185,8 +185,8 @@ PROFILES = {
         split_long=True,
         send_delay_ms=1000,
         instruction=(
-            "Responda de forma clara e concisa. "
-            "Maximo 1000 caracteres."
+            "Reply clearly and concisely. "
+            "Maximum 1000 characters."
         ),
     ),
 }

@@ -1,56 +1,56 @@
 # Hermes for Reticulum
 
-Ponte entre o [Hermes Agent](https://github.com/NousResearch/hermes-agent) e a rede mesh [Reticulum](https://reticulum.network) via [LXMF](https://github.com/markqvist/lxmf). Converse com seu agente de IA pelo [Sideband](https://github.com/markqvist/Sideband) — inclusive off-grid por LoRa.
+Bridge between [Hermes Agent](https://github.com/NousResearch/hermes-agent) and the [Reticulum](https://reticulum.network) mesh network via [LXMF](https://github.com/markqvist/lxmf). Chat with your AI agent through [Sideband](https://github.com/markqvist/Sideband) — even off-grid over LoRa.
 
 ```
-Sideband (Android)                    Hermes Agent (servidor)
+Sideband (Android)                    Hermes Agent (server)
 ┌──────────────┐    LoRa / TCP / I2P   ┌──────────────────┐
-│  Mensagem    │ ◄══════ Reticulum ═══► │  Agente de IA    │
-│              │    LXMF (criptografado)│                  │
+│  Message     │ ◄══════ Reticulum ═══► │  AI Agent        │
+│              │    LXMF (encrypted)    │                  │
 └──────────────┘                        └──────────────────┘
 ```
 
-## O que é?
+## What is this?
 
-Este projeto implementa um bridge LXMF que encaminha mensagens da rede Reticulum para o Hermes Agent e devolve as respostas. Principais benefícios:
+This project implements an LXMF bridge that forwards messages from the Reticulum network to Hermes Agent and sends replies back. Key benefits:
 
-- **Chat com IA em qualquer lugar** — inclusive sem internet, via rádio LoRa
-- **Criptografia ponta a ponta** (Curve25519 + AES-128)
-- **Sem infraestrutura central** — sem servidores proprietários nem cadastros
-- **Compatível com Sideband** (Android, Linux, macOS, Windows)
+- **Chat with AI from anywhere** — even without internet, using LoRa radio
+- **End-to-end encryption** (Curve25519 + AES-128)
+- **No central infrastructure** — no proprietary servers or sign-ups
+- **Sideband compatible** (Android, Linux, macOS, Windows)
 
-## Requisitos
+## Requirements
 
-| Item | Versão / detalhe |
+| Item | Version / detail |
 |------|------------------|
-| Python | 3.11 ou superior |
-| Hermes Agent | Instalado e funcional (`hermes chat -q "test"`) |
-| Servidor (opcional) | IP público com porta TCP aberta (padrão: 37428) |
+| Python | 3.11 or newer |
+| Hermes Agent | Installed and working (`hermes chat -q "test"`) |
+| Server (optional) | Public IP with an open TCP port (default: 37428) |
 
-## Início rápido
+## Quick start
 
-Para subir em poucos minutos, siga o [QUICKSTART.md](QUICKSTART.md).
+To get running in a few minutes, follow [QUICKSTART.md](QUICKSTART.md).
 
-## Instalação
+## Installation
 
 ```bash
-# 1. Clonar o repositório
+# 1. Clone the repository
 git clone https://github.com/apolosan/rns_hermes_endpoint.git
 cd rns_hermes_endpoint
 
-# 2. Instalar (cria venv e dependências)
+# 2. Install (creates venv and dependencies)
 bash install.sh
 
-# 3. Ativar o ambiente virtual
+# 3. Activate the virtual environment
 source venv/bin/activate
 
-# 4. Configurar variáveis de ambiente
+# 4. Configure environment variables
 cp config/env.example .env
-# Edite .env conforme sua instalação
+# Edit .env for your deployment
 
-# 5. Configurar Reticulum (interface TCP Server)
-#    O instalador copia config/reticulum.conf para ~/.reticulum/config se não existir.
-#    Ajuste listen_port e, se necessário, o peer TCP Client:
+# 5. Configure Reticulum (TCP Server interface)
+#    The installer copies config/reticulum.conf to ~/.reticulum/config if missing.
+#    Adjust listen_port and, if needed, the TCP Client peer:
 #
 #    [[TCP Server Interface]]
 #      type = TCPServerInterface
@@ -61,134 +61,134 @@ cp config/env.example .env
 #      target_host = YOUR_MESH_PEER_HOST
 #      target_port = YOUR_MESH_PEER_PORT
 
-# 6. Liberar porta no firewall (se expuser o nó na internet)
+# 6. Open the firewall port (if exposing the node to the internet)
 sudo ufw allow 37428/tcp
 
-# 7. Iniciar o bridge
+# 7. Start the bridge
 hermes-reticulum run
 
-# 8. Anotar o endereço LXMF exibido na inicialização
-#    Adicione-o como contato no Sideband
+# 8. Note the LXMF address printed at startup
+#    Add it as a contact in Sideband
 ```
 
-## Comandos
+## Commands
 
 ```bash
-hermes-reticulum run              # Inicia o bridge
-hermes-reticulum run --verbose    # Log detalhado
-hermes-reticulum address          # Exibe endereço LXMF
-hermes-reticulum status           # Status do bridge
+hermes-reticulum run              # Start the bridge
+hermes-reticulum run --verbose    # Verbose logging
+hermes-reticulum address          # Show LXMF address
+hermes-reticulum status           # Bridge status
 
-# Opções customizadas
+# Custom options
 hermes-reticulum run \
-  --display-name "Meu Agente" \
+  --display-name "My Agent" \
   --stamp-cost 4 \
   --timeout 120 \
-  --hermes-bin /caminho/para/hermes
+  --hermes-bin /path/to/hermes
 ```
 
-## Arquitetura
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Sideband (Android / Linux)                             │
-│  └── Cliente LXMF → Stack Reticulum → LoRa/TCP/I2P      │
+│  └── LXMF Client → Reticulum Stack → LoRa/TCP/I2P       │
 └─────────────────────┬───────────────────────────────────┘
-                      │ mensagens LXMF (criptografadas)
+                      │ LXMF messages (encrypted)
                       ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Servidor / VPS                                         │
+│  Server / VPS                                           │
 │  ┌─────────────────────────────────────────────────┐    │
-│  │  Daemon Reticulum (interface TCP :37428)        │    │
+│  │  Reticulum daemon (TCP interface :37428)        │    │
 │  └────────────────────┬────────────────────────────┘    │
 │                       ▼                                  │
 │  ┌─────────────────────────────────────────────────┐    │
-│  │  Hermes for Reticulum (este projeto)            │    │
-│  │  ├── LXMFBridge      — recepção LXMF           │    │
-│  │  ├── HermesClient    — subprocesso hermes CLI  │    │
-│  │  └── AccessControl   — filtro de remetentes    │    │
+│  │  Hermes for Reticulum (this project)            │    │
+│  │  ├── LXMFBridge      — LXMF message handling    │    │
+│  │  ├── HermesClient    — hermes CLI subprocess    │    │
+│  │  └── AccessControl   — sender filtering         │    │
 │  └────────────────────┬────────────────────────────┘    │
 │                       ▼                                  │
 │  ┌─────────────────────────────────────────────────┐    │
-│  │  Hermes Agent (LLM, tools, memória, skills)     │    │
+│  │  Hermes Agent (LLM, tools, memory, skills)      │    │
 │  └─────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Configuração
+## Configuration
 
-### Variáveis de ambiente
+### Environment variables
 
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `RETICULUM_DISPLAY_NAME` | `Hermes for Reticulum` | Nome exibido na rede |
-| `RETICULUM_STORAGE` | `~/.lxmf/storage` | Armazenamento LXMF |
-| `RETICULUM_STAMP_COST` | `8` | Custo de stamp (controle de banda) |
-| `RETICULUM_CONFIG` | `~/.reticulum` | Diretório de config Reticulum |
-| `HERMES_BIN` | *(auto-detectado)* | Caminho do binário `hermes` |
-| `HERMES_TIMEOUT` | `300` | Timeout do Hermes (segundos) |
-| `HERMES_RETICUM_ALLOW_ALL` | `false` | Permitir qualquer remetente |
-| `HERMES_RETICUM_ALLOWED_USERS` | *(vazio)* | Allowlist de hashes LXMF |
-| `HERMES_RETICUM_BLOCKED_USERS` | *(vazio)* | Blocklist de hashes LXMF |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RETICULUM_DISPLAY_NAME` | `Hermes for Reticulum` | Name shown on the mesh |
+| `RETICULUM_STORAGE` | `~/.lxmf/storage` | LXMF storage path |
+| `RETICULUM_STAMP_COST` | `8` | Stamp cost (bandwidth throttle) |
+| `RETICULUM_CONFIG` | `~/.reticulum` | Reticulum config directory |
+| `HERMES_BIN` | *(auto-detected)* | Path to the `hermes` binary |
+| `HERMES_TIMEOUT` | `300` | Hermes timeout (seconds) |
+| `HERMES_RETICUM_ALLOW_ALL` | `false` | Allow any sender |
+| `HERMES_RETICUM_ALLOWED_USERS` | *(empty)* | LXMF hash allowlist |
+| `HERMES_RETICUM_BLOCKED_USERS` | *(empty)* | LXMF hash blocklist |
 
-Modelo completo em [config/env.example](config/env.example).
+Full template: [config/env.example](config/env.example).
 
-### Detecção do binário Hermes
+### Hermes binary detection
 
-Ordem de busca automática:
+Automatic search order:
 
-1. `hermes` no `PATH`
+1. `hermes` on `PATH`
 2. `/opt/hermes/.venv/bin/hermes`
 3. `/opt/hermes/bin/hermes`
 4. `~/.hermes/bin/hermes`
 5. `~/.local/bin/hermes`
 
-Override: `--hermes-bin` ou variável `HERMES_BIN`.
+Override with `--hermes-bin` or the `HERMES_BIN` variable.
 
-### Controle de acesso
+### Access control
 
-Por padrão, apenas endereços na allowlist podem interagir (`HERMES_RETICUM_ALLOW_ALL=false`).
+By default, only allowlisted addresses can interact (`HERMES_RETICUM_ALLOW_ALL=false`).
 
 ```bash
-# Em .env
+# In .env
 HERMES_RETICUM_ALLOW_ALL=false
-HERMES_RETICUM_ALLOWED_USERS=hash_lxmf_do_sideband,outro_hash_opcional
+HERMES_RETICUM_ALLOWED_USERS=your_sideband_lxmf_hash,optional_second_hash
 ```
 
-O hash LXMF aparece em Sideband → Settings → Identity.
+Your LXMF hash is shown in Sideband → Settings → Identity.
 
-## Serviço systemd
+## Systemd service
 
-Ajuste os caminhos em `config/hermes-reticulum*.service` antes de instalar.
+Adjust paths in `config/hermes-reticulum*.service` before installing.
 
-### Nível de usuário (sem root)
+### User-level (no root)
 
 ```bash
 mkdir -p ~/.config/systemd/user/
 cp config/hermes-reticulum.user.service ~/.config/systemd/user/hermes-reticulum.service
-# Edite WorkingDirectory, Environment e ExecStart para seus caminhos
+# Edit WorkingDirectory, Environment, and ExecStart for your paths
 systemctl --user daemon-reload
 systemctl --user enable --now hermes-reticulum
 journalctl --user -u hermes-reticulum -f
 ```
 
-### Nível de sistema (root)
+### System-level (root)
 
 ```bash
 sudo cp config/hermes-reticulum.service /etc/systemd/system/
-# Edite caminhos e usuário do serviço conforme o deploy
+# Edit paths and service user for your deployment
 sudo systemctl daemon-reload
 sudo systemctl enable --now hermes-reticulum
 ```
 
-## Conectar pelo Sideband (Android)
+## Connect from Sideband (Android)
 
-1. Instale o [Sideband](https://github.com/markqvist/Sideband/releases/latest)
-2. Configure uma interface de rede (Wi-Fi/TCP ou LoRa)
-3. Adicione o endereço LXMF do bridge como contato
-4. Envie uma mensagem — o agente responde via Hermes
+1. Install [Sideband](https://github.com/markqvist/Sideband/releases/latest)
+2. Configure a network interface (Wi-Fi/TCP or LoRa)
+3. Add the bridge's LXMF address as a contact
+4. Send a message — the agent replies via Hermes
 
-## Desenvolvimento
+## Development
 
 ```bash
 git clone https://github.com/apolosan/rns_hermes_endpoint.git
@@ -202,32 +202,32 @@ python -m pytest tests/ -v
 ruff check src/ tests/
 ```
 
-## Como funciona
+## How it works
 
-1. Sideband envia mensagem LXMF para o hash do bridge
-2. Reticulum roteia (LoRa, TCP ou I2P)
-3. LXM Router valida assinatura e descriptografa
-4. Thread pool processa em worker (não bloqueante)
-5. AccessControl verifica remetente
-6. HermesClient executa `hermes chat -q "<mensagem>"`
-7. Resposta retorna como mensagem LXMF ao Sideband
+1. Sideband sends an LXMF message to the bridge hash
+2. Reticulum routes it (LoRa, TCP, or I2P)
+3. LXM Router validates the signature and decrypts the payload
+4. A thread pool processes the message in a worker (non-blocking)
+5. AccessControl checks the sender
+6. HermesClient runs `hermes chat -q "<message>"`
+7. The reply is sent back as an LXMF message to Sideband
 
-## Segurança
+## Security
 
-- Criptografia ponta a ponta (Curve25519 + AES-128)
-- Forward secrecy via links efêmeros
-- Assinaturas Ed25519 nas mensagens
-- Controle de acesso por hash de identidade
-- Pool de threads limita processamento concorrente
-- O hash LXMF é público na rede (equivalente a um identificador de contato)
+- End-to-end encryption (Curve25519 + AES-128)
+- Forward secrecy via ephemeral links
+- Ed25519 message signatures
+- Access control by identity hash
+- Thread pool limits concurrent processing
+- The LXMF hash is public on the mesh (like a contact identifier)
 
-## Licença
+## License
 
 MIT
 
-## Créditos
+## Acknowledgments
 
-- [Reticulum](https://reticulum.network) — stack de rede mesh
-- [LXMF](https://github.com/markqvist/lxmf) — protocolo de mensagens
-- [Sideband](https://github.com/markqvist/Sideband) — cliente móvel
-- [Hermes Agent](https://github.com/NousResearch/hermes-agent) — agente de IA
+- [Reticulum](https://reticulum.network) — mesh networking stack
+- [LXMF](https://github.com/markqvist/lxmf) — messaging protocol
+- [Sideband](https://github.com/markqvist/Sideband) — mobile client
+- [Hermes Agent](https://github.com/NousResearch/hermes-agent) — AI agent

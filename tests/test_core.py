@@ -120,7 +120,7 @@ class TestHermesClient:
 
         client = HermesClient(timeout=300)
         reply = client.chat("Hello")
-        assert "timeout" in reply.lower() or "excedeu" in reply.lower()
+        assert "timeout" in reply.lower() or "exceeded" in reply.lower()
 
     def test_chat_handles_file_not_found(self, monkeypatch):
         def mock_run(cmd, **kwargs):
@@ -134,7 +134,7 @@ class TestHermesClient:
 
         client = HermesClient()
         reply = client.chat("Hello")
-        assert "não encontrado" in reply or "not found" in reply.lower()
+        assert "not found" in reply.lower()
 
     def test_chat_handles_nonzero_exit(self, monkeypatch):
         def mock_run(cmd, **kwargs):
@@ -152,7 +152,7 @@ class TestHermesClient:
 
         client = HermesClient()
         reply = client.chat("Hello")
-        assert "Erro" in reply or "erro" in reply.lower()
+        assert "error" in reply.lower()
 
 
 class TestVersion:

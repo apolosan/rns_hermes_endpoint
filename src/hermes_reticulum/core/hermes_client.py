@@ -119,33 +119,33 @@ class HermesClient:
             reply = result.stdout.strip()
             if not reply:
                 logger.warning("Hermes returned empty output")
-                return "_(sem resposta)_"
+                return "_(no response)_"
 
             return reply
 
         except subprocess.TimeoutExpired:
             logger.error("Hermes timed out after %ds", self.timeout)
             return (
-                f"⏱️ Processamento excedeu o limite de {self.timeout}s. "
-                "Tente uma pergunta mais curta."
+                f"⏱️ Processing exceeded the {self.timeout}s limit. "
+                "Try a shorter question."
             )
 
         except FileNotFoundError:
             logger.error("Hermes binary not found at: %s", self.hermes_bin)
-            return "❌ Hermes Agent não encontrado. Verifique a instalação."
+            return "❌ Hermes Agent not found. Check your installation."
 
         except Exception as e:
             logger.error("Unexpected error calling Hermes: %s", e, exc_info=True)
-            return f"❌ Erro inesperado: {str(e)[:200]}"
+            return f"❌ Unexpected error: {str(e)[:200]}"
 
     def _error_reply(self, returncode: int, stderr: str) -> str:
         """Build a user-friendly error message from a failed Hermes call."""
         if returncode == 1:
-            return "❌ Erro ao processar mensagem. Verifique os logs."
+            return "❌ Error processing message. Check the logs."
         elif returncode == 130:
-            return "⏱️ Processamento cancelado por timeout."
+            return "⏱️ Processing canceled due to timeout."
         else:
             brief = (stderr or "").split("\n")[-1][:200]
             if brief:
-                return f"❌ Erro (código {returncode}): {brief}"
-            return f"❌ Erro (código {returncode})"
+                return f"❌ Error (code {returncode}): {brief}"
+            return f"❌ Error (code {returncode})"
