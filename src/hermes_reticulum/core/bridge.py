@@ -256,7 +256,23 @@ class LXMFBridge:
             except ValueError:
                 logger.error("Invalid recipient hash: %s", recipient_hex)
                 return False
+
+            # Try recall first
             recipient_identity = RNS.Identity.recall(recipient_hash)
+
+            # If unknown, request path to trigger identity exchange
+            if recipient_identity is None:
+                logger.info(
+                    "Identity unknown for %s — requesting path...",
+                    recipient_hex[:16],
+                )
+                RNS.Transport.request_path(recipient_hash)
+                # Poll for identity arrival (up to 8s)
+                for _ in range(8):
+                    time.sleep(1)
+                    recipient_identity = RNS.Identity.recall(recipient_hash)
+                    if recipient_identity is not None:
+                        break
 
         if recipient_identity is None:
             logger.error(
