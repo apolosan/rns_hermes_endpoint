@@ -13,11 +13,26 @@ import argparse
 import logging
 import os
 import sys
+from pathlib import Path
 
 from hermes_reticulum import __version__
 from hermes_reticulum.core.acl import AccessControl
 from hermes_reticulum.core.bridge import LXMFBridge
 from hermes_reticulum.core.hermes_client import HermesClient
+
+
+def _load_dotenv():
+    """Load .env file from project root if python-dotenv is available."""
+    try:
+        from dotenv import load_dotenv
+
+        # Look for .env in CWD and project root
+        for candidate in [Path.cwd() / ".env", Path(__file__).resolve().parent.parent.parent / ".env"]:
+            if candidate.exists():
+                load_dotenv(candidate)
+                return
+    except ImportError:
+        pass  # python-dotenv not installed — rely on OS env only
 
 
 def setup_logging(verbose: bool = False):
@@ -129,6 +144,7 @@ def cmd_status(args):
 
 
 def main():
+    _load_dotenv()  # Load .env before any command parsing
     parser = argparse.ArgumentParser(
         prog="hermes-reticulum",
         description="Hermes for Reticulum — AI agent on the mesh network",
