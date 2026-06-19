@@ -74,10 +74,10 @@ def register(ctx):
         max_message_length=1024,
         pii_safe=True,
         platform_hint=(
-            "You are on Reticulum/LXMF (via Sideband). "
+            "You are on Reticulum/LXMF (RNode, Sideband, or other mesh client). "
             "Messages are plain text only — no markdown formatting. "
             "Keep responses concise due to bandwidth constraints (especially over LoRa). "
-            "The connection may be off-grid, so be efficient and clear."
+            "The client may be off-grid; route replies efficiently."
         ),
         cron_deliver_env_var="RETICULUM_HOME_CHANNEL",
         allowed_users_env="HERMES_RETICUM_ALLOWED_USERS",

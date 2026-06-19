@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hermes-reticulum"
 version = "0.1.0"
-description = "Reticulum/LXMF bridge for Hermes Agent — chat with your AI agent off-grid via Sideband"
+description = "Put an AI agent on your Reticulum mesh — reachable from off-grid RNodes, Sideband, and any LXMF client, without a central messaging server"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
     {name = "apolosan"},
 ]
-keywords = ["reticulum", "lxmf", "hermes", "ai-agent", "off-grid", "lora", "sideband", "mesh"]
+keywords = ["reticulum", "lxmf", "hermes", "ai-agent", "off-grid", "lora", "rnode", "sideband", "mesh"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

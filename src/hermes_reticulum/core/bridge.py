@@ -1,7 +1,7 @@
 """
 LXMF Message Bridge — the core engine that connects Reticulum/LXMF to Hermes Agent.
 
-Manages the LXM Router, receives messages from Sideband users,
+Manages the LXM Router, receives messages from mesh LXMF clients (RNodes, Sideband, etc.),
 dispatches them to Hermes, and sends replies back over the mesh.
 
 Thread safety: The LXMF delivery callback runs inside the RNS event loop
