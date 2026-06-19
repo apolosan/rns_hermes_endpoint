@@ -50,12 +50,19 @@ def cmd_run(args):
         rns_config_path=rns_config,
     )
 
-    # Wire up: LXMF message → ACL check → Hermes → reply
-    def handle_message(source_hash: str, content: str) -> str | None:
+    # Wire up: LXMF message → ACL check → profile → Hermes → reply
+    def handle_message(source_hash: str, content: str, profile=None) -> str | None:
         if not acl.is_allowed(source_hash):
             logger.info("Message from %s rejected by ACL", source_hash[:16])
-            return "⛔ Acesso não autorizado."
-        return hermes.chat(content)
+            return "⛔ Acesso nao autorizado."
+
+        # Build prompt with adaptive instruction from profile
+        if profile and profile.instruction:
+            prompt = f"{profile.instruction}\n\nUsuario: {content}"
+        else:
+            prompt = content
+
+        return hermes.chat(prompt)
 
     bridge.set_message_handler(handle_message)
 

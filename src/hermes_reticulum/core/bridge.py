@@ -20,6 +20,9 @@ from pathlib import Path
 import LXMF
 import RNS
 
+from hermes_reticulum.core.adapter import prepare_reply
+from hermes_reticulum.core.profiler import ChannelMetrics, ChannelProfiler
+
 logger = logging.getLogger("hermes_reticulum.bridge")
 
 # Max concurrent message handlers — prevents hermes subprocess flood
@@ -66,9 +69,12 @@ class LXMFBridge:
         self.identity: RNS.Identity | None = None
         self.destination: RNS.Destination | None = None
 
-        # Message handler: called with (source_hash: str, content: str) -> str | None
+        # Message handler: called with (source_hash, content, profile)
         self._message_handler = None
         self._running = False
+
+        # Channel profiler for adaptive responses
+        self.profiler = ChannelProfiler()
 
         # Thread pool for non-blocking message processing
         self._pool: ThreadPoolExecutor | None = None
@@ -170,7 +176,9 @@ class LXMFBridge:
 
             source_hash = RNS.prettyhexrep(message.source_hash)
             src_bytes = message.source_hash
-            source_hash_raw = src_bytes.hex() if isinstance(src_bytes, bytes) else src_bytes.hex()
+            source_hash_raw = (
+                src_bytes.hex() if isinstance(src_bytes, bytes) else src_bytes.hex()
+            )
 
             # Log reception
             sig = "valid" if message.signature_validated else "invalid/unknown"
@@ -181,23 +189,36 @@ class LXMFBridge:
                 source_hash, transport, sig, content,
             )
 
+            # Extract channel metrics and classify
+            metrics = ChannelMetrics.from_lxmessage(message)
+            profile = self.profiler.classify(metrics)
+
             # Dispatch to thread pool (non-blocking)
             if self._message_handler and self._pool:
-                self._pool.submit(self._process_and_reply, source_hash_raw, content)
+                self._pool.submit(
+                    self._process_and_reply, source_hash_raw, content, profile,
+                )
             else:
                 logger.warning("No handler or pool — dropping from %s", source_hash)
 
         except Exception as e:
             logger.error("Error in LXMF callback: %s", e, exc_info=True)
 
-    def _process_and_reply(self, source_hash: str, content: str):
+    def _process_and_reply(
+        self, source_hash: str, content: str, profile=None,
+    ):
         """
         Process a message and send the reply. Runs in a thread pool worker.
         """
         try:
-            reply = self._message_handler(source_hash, content)
+            reply = self._message_handler(source_hash, content, profile)
             if reply:
-                self.send_reply(source_hash, reply)
+                # Adaptive truncation and splitting
+                parts = prepare_reply(reply, profile)
+                for i, part in enumerate(parts):
+                    if i > 0 and profile:
+                        time.sleep(profile.send_delay_ms / 1000)
+                    self.send_reply(source_hash, part)
         except Exception as e:
             logger.error(
                 "Error processing message from %s: %s",
