@@ -17,9 +17,11 @@ start() {
     echo "Starting Hermes for Reticulum..."
     cd "$PROJECT_DIR"
 
-    # Source env
+    # Source env and ensure HOME is correct for Reticulum config lookup
     set -a
     . "$ENVFILE"
+    HOME=/opt/data
+    export HOME
     set +a
 
     nohup "$VENV/bin/hermes-reticulum" run \
